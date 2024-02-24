@@ -1,12 +1,11 @@
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Response, status, Depends
 from fastapi import Body
-from pydantic import BaseModel
 import psycopg2
 import time
 from psycopg2.extras import RealDictCursor
 from sqlalchemy.orm import Session
-from . import models
+from . import models, schema
 from .database import engine, get_db
 
 
@@ -32,22 +31,12 @@ while True:
         print("Error:", error)
         time.sleep(2)
 
-
-class Post(BaseModel):
-    title: str
-    content: str
     published: bool = True
 
 
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
-
-
-# @app.get("/sqlalchmy")
-# def text_post(db: Session = Depends(get_db)):
-#     posts = db.query(models.Post).all()
-#     return {"data": posts}
 
 
 @app.get("/posts")
@@ -59,7 +48,7 @@ async def login(db: Session = Depends(get_db)):
 
 
 @app.post("/createPost", status_code=status.HTTP_201_CREATED)
-async def create_post(post: Post, db: Session = Depends(get_db)):
+async def create_post(post: schema.PostCreate, db: Session = Depends(get_db)):
     # cursor.execute(
     #     "INSERT INTO posts(title, content, published) VALUES (%s, %s, %s) RETURNING *",
     #     (post.title, post.content, post.published),
@@ -107,7 +96,7 @@ def delete_Post(id: int, response: Response, db: Session = Depends(get_db)):
 
 @app.put("/post/{id}")
 async def update_Post(
-    id: int, post: Post, response: Response, db: Session = Depends(get_db)
+    id: int, post: schema.PostCreate, response: Response, db: Session = Depends(get_db)
 ):
     # cursor.execute(
     #     "UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s  RETURNING *",
